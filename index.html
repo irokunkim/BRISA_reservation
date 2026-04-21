@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="예약관리">
+<title>예약 관리</title>
+<style>
+:root {
+  --bg: #f5f5f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --text: #1a1a18;
+  --text2: #6b6b65;
+  --text3: #9e9e96;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.18);
+  --radius: 14px;
+  --radius-sm: 9px;
+  --naver: #2db400;
+  --naver-bg: #e8f8e8;
+  --naver-text: #1a6e00;
+  --catch: #1a73e8;
+  --catch-bg: #e8f0fd;
+  --catch-text: #0d47a1;
+  --phone: #757575;
+  --phone-bg: #efefef;
+  --phone-text: #333;
+  --warn: #f57c00;
+  --warn-bg: #fff3e0;
+  --danger-bg: #fdecea;
+  --danger-text: #b71c1c;
+  --purple: #5c35cc;
+  --purple-bg: #ede7ff;
+  --purple-text: #3a1f8a;
+  --green-text: #1b5e20;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a;
+    --surface: #2a2a27;
+    --surface2: #333330;
+    --text: #f0efe9;
+    --text2: #a8a8a0;
+    --text3: #6b6b65;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.2);
+    --naver-bg: #0d3d0d;
+    --naver-text: #6fcf6f;
+    --catch-bg: #0d2a4a;
+    --catch-text: #7ab0f0;
+    --phone-bg: #2a2a2a;
+    --phone-text: #bbb;
+    --warn-bg: #3a2800;
+    --danger-bg: #3a0d0d;
+    --danger-text: #ef9a9a;
+    --purple-bg: #1e1040;
+    --purple-text: #b39dff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); font-family: -apple-system, 'Helvetica Neue', sans-serif; color: var(--text); font-size: 15px; }
+.app { max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top, 12px) 14px env(safe-area-inset-bottom, 20px); min-height: 100vh; }
+
+/* topbar */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 12px; }
+.app-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.date-nav { display: flex; align-items: center; gap: 4px; }
+.nav-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border2); background: var(--surface); cursor: pointer; font-size: 16px; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.nav-btn:active { background: var(--surface2); }
+.date-str { font-size: 13px; font-weight: 600; min-width: 106px; text-align: center; color: var(--text); }
+
+/* sync status */
+.sync-bar { display: flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
+.sync-dot.ok { background: #4caf50; }
+.sync-dot.err { background: #f44336; }
+.sync-dot.loading { background: #ff9800; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: var(--surface); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; border: 1px solid var(--border); }
+.stat-n { font-size: 22px; font-weight: 700; }
+.stat-l { font-size: 10px; color: var(--text2); margin-top: 1px; }
+.c-ok { color: #2e7d32; }
+.c-warn { color: var(--warn); }
+.c-muted { color: var(--text2); }
+
+/* notice */
+.notice { background: var(--warn-bg); border: 1px solid var(--warn); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12px; color: var(--warn); margin-bottom: 12px; display: none; line-height: 1.5; }
+
+/* session */
+.sess-head { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--text2); text-transform: uppercase; margin: 14px 0 7px; padding-left: 2px; }
+
+/* slot */
+.slot { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 7px; overflow: hidden; }
+.slot.is-full { border-color: var(--border2); }
+.slot.need-catch { border-left: 3px solid var(--warn); }
+
+.slot-top { display: flex; align-items: flex-start; padding: 11px 13px; gap: 10px; }
+.slot-time { font-size: 15px; font-weight: 700; min-width: 46px; padding-top: 1px; }
+.slot-body { flex: 1; min-width: 0; }
+.slot-name { font-size: 14px; font-weight: 600; }
+.slot-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.slot-memo { font-size: 12px; color: var(--text3); margin-top: 3px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.badge { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 20px; white-space: nowrap; }
+.b-naver { background: var(--naver-bg); color: var(--naver-text); }
+.b-catch { background: var(--catch-bg); color: var(--catch-text); }
+.b-phone { background: var(--phone-bg); color: var(--phone-text); }
+.b-full { background: var(--danger-bg); color: var(--danger-text); }
+.b-warn { background: var(--warn-bg); color: var(--warn); }
+
+.slot-empty { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px; }
+.empty-time { font-size: 15px; font-weight: 700; color: var(--text3); }
+.empty-txt { font-size: 13px; color: var(--text3); }
+.add-btn { font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border2); background: var(--surface); cursor: pointer; color: var(--text2); }
+.add-btn:active { background: var(--surface2); }
+
+.slot-actions { border-top: 1px solid var(--border); display: flex; }
+.act-btn { flex: 1; padding: 11px 8px; font-size: 13px; font-weight: 600; border: none; background: transparent; cursor: pointer; color: var(--text2); font-family: inherit; text-align: center; }
+.act-btn:active { background: var(--surface2); }
+.act-btn + .act-btn { border-left: 1px solid var(--border); }
+.act-toss { color: var(--purple); }
+.act-del { color: #c0392b; }
+
+/* bottom sheet */
+.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: none; align-items: flex-end; justify-content: center; }
+.backdrop.show { display: flex; }
+.sheet { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; padding: 0 16px env(safe-area-inset-bottom, 24px); max-height: 92vh; overflow-y: auto; }
+.sheet-drag { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 16px; }
+.sheet-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+
+/* form */
+.field { margin-bottom: 13px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.field input, .field textarea { width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); font-family: inherit; -webkit-appearance: none; }
+.field textarea { resize: none; height: 72px; line-height: 1.5; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--purple); }
+.seg { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.seg-btn { padding: 10px 4px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); cursor: pointer; color: var(--text2); font-family: inherit; text-align: center; transition: all 0.15s; }
+.seg-btn.sel-naver { background: var(--naver-bg); color: var(--naver-text); border-color: var(--naver); }
+.seg-btn.sel-catch { background: var(--catch-bg); color: var(--catch-text); border-color: var(--catch); }
+.seg-btn.sel-phone { background: var(--phone-bg); color: var(--phone-text); border-color: var(--phone); }
+.dup-warn { background: var(--warn-bg); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12px; color: var(--warn); margin-bottom: 12px; display: none; line-height: 1.5; }
+.sheet-btns { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 6px; padding-bottom: 4px; }
+.btn-cancel { padding: 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: transparent; font-size: 15px; cursor: pointer; color: var(--text2); font-family: inherit; font-weight: 600; }
+.btn-confirm { padding: 14px; border: none; border-radius: var(--radius-sm); background: var(--text); color: var(--bg); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-cancel:active { background: var(--surface2); }
+.btn-confirm:active { opacity: 0.8; }
+
+/* toss sheet */
+.toss-info-box { background: var(--surface2); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px; }
+.toss-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 13px; border-bottom: 1px solid var(--border); }
+.toss-row:last-child { border-bottom: none; }
+.toss-key { font-size: 13px; color: var(--text2); }
+.toss-val { font-size: 13px; font-weight: 600; }
+.guide-txt { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+.copy-box { background: var(--purple-bg); border-radius: var(--radius-sm); padding: 12px 13px; font-size: 13px; color: var(--purple-text); font-family: 'Menlo', monospace; line-height: 1.6; margin-bottom: 14px; white-space: pre-wrap; word-break: keep-all; }
+.toss-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-bottom: 4px; }
+.btn-copy { padding: 13px; border: 1.5px solid var(--purple); border-radius: var(--radius-sm); background: transparent; color: var(--purple); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-open-toss { padding: 13px; border: none; border-radius: var(--radius-sm); background: var(--purple); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-copy:active { background: var(--purple-bg); }
+.btn-open-toss:active { opacity: 0.85; }
+.copied-msg { font-size: 12px; color: #2e7d32; text-align: center; margin-top: 8px; min-height: 18px; }
+
+/* loading overlay */
+.loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
+.loading-overlay.hidden { display: none; }
+.loading-spinner { width: 28px; height: 28px; border: 3px solid var(--border2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-txt { font-size: 13px; color: var(--text2); }
+
+/* setup screen */
+.setup { max-width: 500px; margin: 60px auto; padding: 0 20px; }
+.setup h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.setup p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+.setup-field { margin-bottom: 12px; }
+.setup-field label { font-size: 12px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.setup-field input { width: 100%; padding: 12px 13px; font-size: 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); font-family: inherit; }
+.setup-field input:focus { outline: none; border-color: var(--purple); }
+.btn-setup { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); background: var(--purple); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.setup-note { font-size: 12px; color: var(--text3); line-height: 1.6; margin-top: 16px; background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; }
+.setup-note a { color: var(--purple); }
+</style>
+</head>
+<body>
+
+<!-- 로딩 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-txt">불러오는 중...</div>
+</div>
+
+<!-- Supabase 설정 화면 -->
+<div id="setupScreen" style="display:none">
+  <div class="setup">
+    <h2>초기 설정</h2>
+    <p>Supabase 프로젝트 정보를 입력하면 세 기기에서 실시간으로 예약을 공유할 수 있어요.</p>
+    <div class="setup-field">
+      <label>Supabase URL</label>
+      <input id="cfgUrl" type="url" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="setup-field">
+      <label>Supabase Anon Key</label>
+      <input id="cfgKey" type="text" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+    </div>
+    <button class="btn-setup" onclick="saveConfig()">저장하고 시작</button>
+    <div class="setup-note">
+      <strong>설정 방법:</strong><br>
+      1. <a href="https://supabase.com" target="_blank">supabase.com</a> 에서 무료 계정 생성<br>
+      2. 새 프로젝트 생성<br>
+      3. Settings → API 에서 URL과 anon key 복사<br>
+      4. SQL Editor에서 아래 쿼리 실행:<br><br>
+      <code style="font-size:11px;white-space:pre-wrap">CREATE TABLE reservations (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  date text NOT NULL,
+  time_slot text NOT NULL,
+  platform text NOT NULL,
+  guest_name text NOT NULL,
+  phone text,
+  people integer NOT NULL,
+  memo text,
+  created_at timestamptz DEFAULT now()
+);</code>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 앱 -->
+<div class="app" id="mainApp" style="display:none">
+  <div class="topbar">
+    <div class="app-title">예약 관리</div>
+    <div class="date-nav">
+      <button class="nav-btn" onclick="changeDate(-1)">‹</button>
+      <div class="date-str" id="dateStr"></div>
+      <button class="nav-btn" onclick="changeDate(1)">›</button>
+    </div>
+  </div>
+
+  <div class="sync-bar">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncTxt">연결 중...</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="sTotal">0</div><div class="stat-l">총 예약</div></div>
+    <div class="stat"><div class="stat-n c-ok" id="sRemain">0</div><div class="stat-l">빈 슬롯</div></div>
+    <div class="stat"><div class="stat-n c-muted" id="sFull">0</div><div class="stat-l">마감</div></div>
+    <div class="stat"><div class="stat-n c-warn" id="sCatch">0</div><div class="stat-l">캐치차단</div></div>
+  </div>
+
+  <div class="notice" id="notice"></div>
+
+  <div class="sess-head">점심 · 11:30 – 13:30</div>
+  <div id="lunchSlots"></div>
+
+  <div class="sess-head">저녁 · 17:00 – 18:30</div>
+  <div id="dinnerSlots"></div>
+</div>
+
+<!-- 예약 추가 시트 -->
+<div class="backdrop" id="addBackdrop" onclick="bClose(event,'addBackdrop')">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <div class="sheet-title" id="addTitle">예약 추가</div>
+    <div class="field">
+      <label>플랫폼</label>
+      <div class="seg">
+        <button class="seg-btn" id="sn" onclick="selP('naver')">네이버</button>
+        <button class="seg-btn" id="sc" onclick="selP('catch')">캐치테이블</button>
+        <button class="seg-btn" id="sp" onclick="selP('phone')">전화예약</button>
+      </div>
+    </div>
+    <div class="field"><label>예약자 이름</label><input id="fName" type="text" placeholder="홍길동" autocomplete="name"></div>
+    <div class="field"><label>연락처</label><input id="fPhone" type="tel" placeholder="010-0000-0000"></div>
+    <div class="field"><label>인원수</label><input id="fPeople" type="number" min="1" max="20" value="2" inputmode="numeric"></div>
+    <div class="field"><label>메모 / 요청사항</label><textarea id="fMemo" placeholder="창가 선호, 알레르기, 특이사항 등"></textarea></div>
+    <div class="dup-warn" id="dupWarn">⚠ 이 시간대에 이미 예약이 있습니다. 캐치테이블 해당 시간 차단을 먼저 확인하세요.</div>
+    <div class="sheet-btns">
+      <button class="btn-cancel" onclick="closeAdd()">취소</button>
+      <button class="btn-confirm" onclick="confirmAdd()" id="btnConfirm">예약 확정</button>
+    </div>
+  </div>
+</div>
+
+<!-- 토스포스 시트 -->
+<div class="backdrop" id="tossBackdrop" onclick="bClose(event,'tossBackdrop')">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <div class="sheet-title">토스포스 입력</div>
+    <div class="toss-info-box" id="tossInfoBox"></div>
+    <div class="guide-txt">아래 정보를 복사한 후 토스포스 앱에서 예약 등록 시 붙여넣기 하세요. 등록하면 카카오 알림톡이 자동 발송됩니다.</div>
+    <div class="copy-box" id="copyBox"></div>
+    <div class="toss-btns">
+      <button class="btn-copy" onclick="doCopy()">복사하기</button>
+      <button class="btn-open-toss" onclick="openToss()">토스포스 열기 ↗</button>
+    </div>
+    <div class="copied-msg" id="copiedMsg"></div>
+  </div>
+</div>
+
+<script>
+const LUNCH = ['11:30','12:00','12:30','13:00','13:30'];
+const DINNER = ['17:00','17:30','18:00','18:30'];
+const ALL = [...LUNCH,...DINNER];
+const DAY = ['일','월','화','수','목','금','토'];
+
+let curDate = new Date();
+let cache = {};
+let pendingSlot = null;
+let pendingPlatform = 'naver';
+let supabase = null;
+let channel = null;
+
+// ── Config ──────────────────────────────────────────────
+function loadConfig() {
+  return {
+    url: localStorage.getItem('sb_url') || '',
+    key: localStorage.getItem('sb_key') || ''
+  };
+}
+function saveConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url || !key) { alert('URL과 Key를 모두 입력해주세요.'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  location.reload();
+}
+
+// ── Supabase lite client ─────────────────────────────────
+function makeClient(url, key) {
+  const headers = { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+  return {
+    async select(date) {
+      const r = await fetch(`${url}/rest/v1/reservations?date=eq.${date}&select=*`, { headers });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    },
+    async insert(row) {
+      const r = await fetch(`${url}/rest/v1/reservations`, { method:'POST', headers, body: JSON.stringify(row) });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    },
+    async remove(id) {
+      const r = await fetch(`${url}/rest/v1/reservations?id=eq.${id}`, { method:'DELETE', headers });
+      if (!r.ok) throw new Error(await r.text());
+    },
+    realtime(onEvent) {
+      // Supabase Realtime via SSE
+      const wsUrl = url.replace('https','wss').replace('http','ws');
+      try {
+        const ws = new WebSocket(`${wsUrl}/realtime/v1/websocket?apikey=${key}&vsn=1.0.0`);
+        ws.onopen = () => {
+          ws.send(JSON.stringify({topic:'realtime:public:reservations',event:'phx_join',payload:{},ref:1}));
+          setSync('ok');
+        };
+        ws.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
+            loadDay(dk(curDate));
+          }
+        };
+        ws.onerror = () => setSync('err');
+        ws.onclose = () => setSync('err');
+        return ws;
+      } catch(e) { setSync('err'); }
+    }
+  };
+}
+
+// ── Helpers ──────────────────────────────────────────────
+function dk(d) { return d.toISOString().slice(0,10); }
+function fmtDate(d) { return `${d.getMonth()+1}월 ${d.getDate()}일 (${DAY[d.getDay()]})`; }
+function fmtDateFull(d) { return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DAY[d.getDay()]})`; }
+
+function setSync(state) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncTxt');
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = state === 'ok' ? '실시간 연결됨' : state === 'loading' ? '동기화 중...' : '연결 오류 — 새로고침';
+}
+
+function changeDate(d) { curDate = new Date(curDate); curDate.setDate(curDate.getDate() + d); loadDay(dk(curDate)); }
+
+// ── Data ─────────────────────────────────────────────────
+function initCache(k) {
+  if (!cache[k]) { cache[k] = {}; ALL.forEach(t => cache[k][t] = null); }
+}
+
+async function loadDay(k) {
+  setSync('loading');
+  initCache(k);
+  try {
+    const rows = await supabase.select(k);
+    ALL.forEach(t => cache[k][t] = null);
+    rows.forEach(r => { cache[k][r.time_slot] = r; });
+    setSync('ok');
+  } catch(e) {
+    setSync('err');
+  }
+  render();
+}
+
+// ── Platform helpers ─────────────────────────────────────
+function plLabel(p) { return {naver:'네이버',catch:'캐치테이블',phone:'전화예약'}[p] || p; }
+function plBadgeClass(p) { return {naver:'b-naver',catch:'b-catch',phone:'b-phone'}[p] || ''; }
+
+// ── Render ────────────────────────────────────────────────
+function renderSlots(times, cid) {
+  const k = dk(curDate);
+  initCache(k);
+  const el = document.getElementById(cid);
+  el.innerHTML = '';
+  times.forEach(time => {
+    const b = cache[k][time];
+    const div = document.createElement('div');
+    const needCatch = b && b.platform !== 'catch';
+    div.className = 'slot' + (b ? ' is-full' : '') + (needCatch ? ' need-catch' : '');
+    if (b) {
+      div.innerHTML = `
+        <div class="slot-top">
+          <div class="slot-time">${time}</div>
+          <div class="slot-body">
+            <div class="slot-name">${b.guest_name} · ${b.people}명</div>
+            <div class="slot-detail">${b.phone || '연락처 없음'}</div>
+            ${b.memo ? `<div class="slot-memo">${b.memo}</div>` : ''}
+          </div>
+          <div class="slot-badges">
+            <span class="badge ${plBadgeClass(b.platform)}">${plLabel(b.platform)}</span>
+            <span class="badge b-full">마감</span>
+            ${needCatch ? '<span class="badge b-warn">캐치차단 필요</span>' : ''}
+          </div>
+        </div>
+        <div class="slot-actions">
+          <button class="act-btn act-toss" onclick="openTossSheet('${time}')">토스포스 입력 →</button>
+          <button class="act-btn act-del" onclick="deleteBooking('${b.id}','${time}')">예약 취소</button>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="slot-empty">
+          <span class="empty-time">${time}</span>
+          <span class="empty-txt">빈 슬롯</span>
+          <button class="add-btn" onclick="openAdd('${time}')">+ 추가</button>
+        </div>`;
+    }
+    el.appendChild(div);
+  });
+}
+
+function updateStats() {
+  const k = dk(curDate); initCache(k);
+  let total=0, full=0, remain=0, catchBlock=0;
+  ALL.forEach(t => {
+    const b = cache[k][t];
+    if (b) { total++; full++; if (b.platform !== 'catch') catchBlock++; }
+    else remain++;
+  });
+  document.getElementById('sTotal').textContent = total;
+  document.getElementById('sRemain').textContent = remain;
+  document.getElementById('sFull').textContent = full;
+  document.getElementById('sCatch').textContent = catchBlock;
+
+  const notice = document.getElementById('notice');
+  if (catchBlock > 0) {
+    const slots = ALL.filter(t => { const b=cache[k][t]; return b && b.platform!=='catch'; });
+    notice.style.display = 'block';
+    notice.textContent = `⚠ 캐치테이블 차단 필요: ${slots.join(', ')}`;
+  } else {
+    notice.style.display = 'none';
+  }
+}
+
+function render() {
+  document.getElementById('dateStr').textContent = fmtDate(curDate);
+  renderSlots(LUNCH, 'lunchSlots');
+  renderSlots(DINNER, 'dinnerSlots');
+  updateStats();
+}
+
+// ── Add booking ───────────────────────────────────────────
+function openAdd(time) {
+  pendingSlot = time;
+  document.getElementById('addTitle').textContent = `${time} 예약 추가`;
+  document.getElementById('fName').value = '';
+  document.getElementById('fPhone').value = '';
+  document.getElementById('fPeople').value = 2;
+  document.getElementById('fMemo').value = '';
+  selP('naver');
+  document.getElementById('addBackdrop').classList.add('show');
+  setTimeout(() => document.getElementById('fName').focus(), 300);
+}
+function closeAdd() { document.getElementById('addBackdrop').classList.remove('show'); }
+
+function selP(p) {
+  pendingPlatform = p;
+  const map = {naver:'sn',catch:'sc',phone:'sp'};
+  ['naver','catch','phone'].forEach(x => {
+    document.getElementById(map[x]).className = 'seg-btn' + (p===x ? ' sel-'+x : '');
+  });
+  const k = dk(curDate); initCache(k);
+  const existing = cache[k][pendingSlot];
+  document.getElementById('dupWarn').style.display = existing ? 'block' : 'none';
+}
+
+async function confirmAdd() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { document.getElementById('fName').focus(); return; }
+  const btn = document.getElementById('btnConfirm');
+  btn.textContent = '저장 중...'; btn.disabled = true;
+  try {
+    await supabase.insert({
+      date: dk(curDate),
+      time_slot: pendingSlot,
+      platform: pendingPlatform,
+      guest_name: name,
+      phone: document.getElementById('fPhone').value.trim(),
+      people: parseInt(document.getElementById('fPeople').value) || 1,
+      memo: document.getElementById('fMemo').value.trim()
+    });
+    closeAdd();
+    await loadDay(dk(curDate));
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  }
+  btn.textContent = '예약 확정'; btn.disabled = false;
+}
+
+async function deleteBooking(id, time) {
+  if (!confirm(`${time} 예약을 취소할까요?`)) return;
+  try {
+    await supabase.remove(id);
+    await loadDay(dk(curDate));
+  } catch(e) { alert('삭제 실패: ' + e.message); }
+}
+
+// ── Toss sheet ────────────────────────────────────────────
+function openTossSheet(time) {
+  const k = dk(curDate);
+  const b = cache[k] && cache[k][time];
+  if (!b) return;
+  const pl = plLabel(b.platform);
+  const dateStr = fmtDateFull(curDate);
+  document.getElementById('tossInfoBox').innerHTML = `
+    <div class="toss-row"><span class="toss-key">일시</span><span class="toss-val">${dateStr} ${time}</span></div>
+    <div class="toss-row"><span class="toss-key">예약자</span><span class="toss-val">${b.guest_name}</span></div>
+    <div class="toss-row"><span class="toss-key">연락처</span><span class="toss-val">${b.phone || '미입력'}</span></div>
+    <div class="toss-row"><span class="toss-key">인원</span><span class="toss-val">${b.people}명</span></div>
+    <div class="toss-row"><span class="toss-key">채널</span><span class="toss-val">${pl}</span></div>
+    ${b.memo ? `<div class="toss-row"><span class="toss-key">메모</span><span class="toss-val" style="text-align:right;max-width:200px">${b.memo}</span></div>` : ''}`;
+  document.getElementById('copyBox').textContent =
+    `[예약정보]\n일시: ${dateStr} ${time}\n예약자: ${b.guest_name}\n연락처: ${b.phone||'미입력'}\n인원: ${b.people}명\n채널: ${pl}${b.memo?'\n메모: '+b.memo:''}`;
+  document.getElementById('copiedMsg').textContent = '';
+  document.getElementById('tossBackdrop').classList.add('show');
+}
+
+function doCopy() {
+  const txt = document.getElementById('copyBox').textContent;
+  if (navigator.clipboard) { navigator.clipboard.writeText(txt); }
+  else { const ta = document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  const m = document.getElementById('copiedMsg');
+  m.textContent = '✓ 클립보드에 복사됐어요!';
+  setTimeout(() => m.textContent = '', 2500);
+}
+function openToss() { doCopy(); setTimeout(() => window.open('toss://', '_blank'), 200); }
+function bClose(e, id) { if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('show'); }
+
+// ── Init ──────────────────────────────────────────────────
+async function init() {
+  const cfg = loadConfig();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  if (!cfg.url || !cfg.key) {
+    document.getElementById('setupScreen').style.display = 'block';
+    return;
+  }
+  supabase = makeClient(cfg.url, cfg.key);
+  document.getElementById('mainApp').style.display = 'block';
+  supabase.realtime(() => loadDay(dk(curDate)));
+  await loadDay(dk(curDate));
+}
+
+init();
+</script>
+</body>
+</html>
