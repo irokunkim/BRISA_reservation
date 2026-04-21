@@ -317,7 +317,6 @@ let supabase = null;
 let channel = null;
 
 // ── Config ──────────────────────────────────────────────
-  if(location.search.includes('reset')){localStorage.clear();}
 function loadConfig() {
   return {
     url: localStorage.getItem('sb_url') || '',
@@ -328,7 +327,7 @@ function saveConfig() {
   const url = document.getElementById('cfgUrl').value.trim();
   const key = document.getElementById('cfgKey').value.trim();
   if (!url || !key) { alert('URL과 Key를 모두 입력해주세요.'); return; }
-  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_url', url.replace(/\/+$/, ''));
   localStorage.setItem('sb_key', key);
   location.reload();
 }
@@ -354,7 +353,7 @@ function makeClient(url, key) {
     },
     realtime(onEvent) {
       // Supabase Realtime via SSE
-      const wsUrl = url.replace('https','wss').replace('http','ws');
+      const wsUrl = base.replace('https','wss').replace('http','ws');
       try {
         const ws = new WebSocket(`${wsUrl}/realtime/v1/websocket?apikey=${key}&vsn=1.0.0`);
         ws.onopen = () => {
@@ -367,12 +366,25 @@ function makeClient(url, key) {
             loadDay(dk(curDate));
           }
         };
-        ws.onerror = () => setSync('err');
-        ws.onclose = () => setSync('err');
+        ws.onerror = () => { setSync('err'); startPolling(onEvent); };
+        ws.onclose = () => { setSync('err'); startPolling(onEvent); };
         return ws;
       } catch(e) { setSync('err'); }
     }
   };
+}
+
+
+// ── Polling fallback (for Safari/iOS WebSocket issues) ───
+let pollingTimer = null;
+function startPolling(onEvent) {
+  if (pollingTimer) return;
+  pollingTimer = setInterval(async () => {
+    try {
+      await loadDay(dk(curDate));
+      setSync('ok');
+    } catch(e) {}
+  }, 10000);
 }
 
 // ── Helpers ──────────────────────────────────────────────
