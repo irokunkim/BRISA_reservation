@@ -334,20 +334,21 @@ function saveConfig() {
 
 // ── Supabase lite client ─────────────────────────────────
 function makeClient(url, key) {
+  const base = url.replace(/\/+$/, '');
   const headers = { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
   return {
     async select(date) {
-      const r = await fetch(`${url}/rest/v1/reservations?date=eq.${date}&select=*`, { headers });
+      const r = await fetch(`${base}/rest/v1/reservations?date=eq.${date}&select=*&order=time_slot.asc`, { headers });
       if (!r.ok) throw new Error(await r.text());
       return r.json();
     },
     async insert(row) {
-      const r = await fetch(`${url}/rest/v1/reservations`, { method:'POST', headers, body: JSON.stringify(row) });
+      const r = await fetch(`${base}/rest/v1/reservations`, { method:'POST', headers, body: JSON.stringify(row) });
       if (!r.ok) throw new Error(await r.text());
       return r.json();
     },
     async remove(id) {
-      const r = await fetch(`${url}/rest/v1/reservations?id=eq.${id}`, { method:'DELETE', headers });
+      const r = await fetch(`${base}/rest/v1/reservations?id=eq.${id}`, { method:'DELETE', headers });
       if (!r.ok) throw new Error(await r.text());
     },
     realtime(onEvent) {
