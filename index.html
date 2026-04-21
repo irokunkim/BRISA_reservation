@@ -317,6 +317,7 @@ let supabase = null;
 let channel = null;
 
 // ── Config ──────────────────────────────────────────────
+  if(location.search.includes('reset')){localStorage.clear();}
 function loadConfig() {
   return {
     url: localStorage.getItem('sb_url') || '',
