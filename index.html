@@ -189,13 +189,11 @@ html, body { height: 100%; background: var(--bg); font-family: -apple-system, 'H
 </head>
 <body>
 
-<!-- 로딩 -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
   <div class="loading-txt">불러오는 중...</div>
 </div>
 
-<!-- Supabase 설정 화면 -->
 <div id="setupScreen" style="display:none">
   <div class="setup">
     <h2>초기 설정</h2>
@@ -230,7 +228,6 @@ html, body { height: 100%; background: var(--bg); font-family: -apple-system, 'H
   </div>
 </div>
 
-<!-- 메인 앱 -->
 <div class="app" id="mainApp" style="display:none">
   <div class="topbar">
     <div class="app-title">예약 관리</div>
@@ -262,7 +259,6 @@ html, body { height: 100%; background: var(--bg); font-family: -apple-system, 'H
   <div id="dinnerSlots"></div>
 </div>
 
-<!-- 예약 추가 시트 -->
 <div class="backdrop" id="addBackdrop" onclick="bClose(event,'addBackdrop')">
   <div class="sheet">
     <div class="sheet-drag"></div>
@@ -287,7 +283,6 @@ html, body { height: 100%; background: var(--bg); font-family: -apple-system, 'H
   </div>
 </div>
 
-<!-- 토스포스 시트 -->
 <div class="backdrop" id="tossBackdrop" onclick="bClose(event,'tossBackdrop')">
   <div class="sheet">
     <div class="sheet-drag"></div>
@@ -323,19 +318,32 @@ function loadConfig() {
     key: localStorage.getItem('sb_key') || ''
   };
 }
+
+// [수정됨] URL 끝의 슬래시를 확실하게 제거하여 저장합니다.
 function saveConfig() {
-  const url = document.getElementById('cfgUrl').value.trim();
+  let url = document.getElementById('cfgUrl').value.trim();
   const key = document.getElementById('cfgKey').value.trim();
   if (!url || !key) { alert('URL과 Key를 모두 입력해주세요.'); return; }
-  localStorage.setItem('sb_url', url.replace(/\/+$/, ''));
+  
+  // URL 끝에 슬래시가 붙어있으면 모두 제거
+  url = url.replace(/\/+$/, '');
+  
+  localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
   location.reload();
 }
 
 // ── Supabase lite client ─────────────────────────────────
+// [수정됨] API 경로 조합 시 이중 슬래시(//)가 생기지 않도록 base URL을 재정의합니다.
 function makeClient(url, key) {
   const base = url.replace(/\/+$/, '');
-  const headers = { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+  const headers = { 
+    'apikey': key, 
+    'Authorization': `Bearer ${key}`, 
+    'Content-Type': 'application/json', 
+    'Prefer': 'return=representation' 
+  };
+
   return {
     async select(date) {
       const r = await fetch(`${base}/rest/v1/reservations?date=eq.${date}&select=*&order=time_slot.asc`, { headers });
@@ -343,7 +351,11 @@ function makeClient(url, key) {
       return r.json();
     },
     async insert(row) {
-      const r = await fetch(`${base}/rest/v1/reservations`, { method:'POST', headers, body: JSON.stringify(row) });
+      const r = await fetch(`${base}/rest/v1/reservations`, { 
+        method: 'POST', 
+        headers, 
+        body: JSON.stringify(row) 
+      });
       if (!r.ok) throw new Error(await r.text());
       return r.json();
     },
@@ -352,7 +364,6 @@ function makeClient(url, key) {
       if (!r.ok) throw new Error(await r.text());
     },
     realtime(onEvent) {
-      // Supabase Realtime via SSE
       const wsUrl = base.replace('https','wss').replace('http','ws');
       try {
         const ws = new WebSocket(`${wsUrl}/realtime/v1/websocket?apikey=${key}&vsn=1.0.0`);
